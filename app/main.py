@@ -30,7 +30,7 @@ app.add_middleware(
     description="Gets the time for the media release for today. Will return an ISO8602 time, or null if it hasn't been posted yet.",
 )
 async def get_announcement_time():
-    return [{"date_of_announcement": date_of_announcement}]
+    return {"date_of_announcement": date_of_announcement}
 
 
 def scraper_task():
