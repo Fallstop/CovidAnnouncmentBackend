@@ -13,14 +13,9 @@ app = FastAPI()
 date_of_announcement: Optional[datetime] = None
 
 
-class AnnouncementModel(BaseModel):
-    date_of_announcement: Optional[datetime] = None
-    
-
 @app.get(
     "/api/get-announcement-time",
     description="Gets the time for the media release for today. Will return an ISO8602 time, or null if it hasn't been posted yet.",
-    response_model=AnnouncementModel
 )
 async def get_announcement_time():
     return [{"date_of_announcement": date_of_announcement}]
