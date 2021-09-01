@@ -5,6 +5,8 @@ from random import randrange
 from typing import Optional
 import threading
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
 
 from scrapper import scrape_website
 
@@ -12,6 +14,16 @@ app = FastAPI()
 
 date_of_announcement: Optional[datetime] = None
 
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get(
     "/api/get-announcement-time",
