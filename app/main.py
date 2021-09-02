@@ -40,7 +40,7 @@ async def get_announcement_time():
     description="Checks if the min health nz youtube channel is streaming, if it is, it return the video ID, if not, it returns null.",
 )
 async def get_youtube_live():
-    return {"youtube_video_id": date_of_announcement}
+    return {"youtube_video_id": youtube_live_id}
 
 @app.get(
     "/api/fake_get_youtube_live",
