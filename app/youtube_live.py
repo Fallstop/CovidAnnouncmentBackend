@@ -16,18 +16,18 @@ load_dotenv()  # take environment variables from .env.
 import googleapiclient.discovery
 import googleapiclient.errors
 
-api_key = os.environ["GCLOUD_API_KEY"]
+API_KEY = os.environ["GCLOUD_API_KEY"]
 
-if api_key is None:
+if API_KEY is None:
     print("GCLOUD_API_KEY (Youtube API key) missing from env or .env file")
     sys.exit(1)
 
-api_service_name = "youtube"
-api_version = "v3"
+API_SERVICE_NAME = "youtube"
+API_VERSION = "v3"
 
 # Get credentials and create an API client
 youtube = googleapiclient.discovery.build(
-    api_service_name, api_version, developerKey=api_key)
+    API_SERVICE_NAME, API_VERSION, developerKey=API_KEY)
 
 # Testing ID - Always live
 # channel_id = UCSJ4gkVC6NrvII8umztf0Ow

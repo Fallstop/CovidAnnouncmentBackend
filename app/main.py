@@ -1,27 +1,32 @@
 from fastapi import FastAPI
-from datetime import datetime,timedelta,time
+from datetime import datetime,timedelta,time,date
 from time import sleep
 from random import randrange
-from typing import Optional
+from typing import List, Optional
 import threading
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from math import sin
 
-from scrapper import scrape_website
+from scrapper import run_announcement_scraper
 from youtube_live import checkLive
 
 app = FastAPI()
 
 date_of_announcement: Optional[datetime] = None
+
+HISTORY_LENGTH = 5
+date_of_announcement_history: List[Optional[datetime]] = [None]*HISTORY_LENGTH
+
+
 youtube_live_id: Optional[str] = None
 
 
-origins = ["*"]
+ALLOWED_ORIGENS = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ALLOWED_ORIGENS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,16 +39,22 @@ app.add_middleware(
 async def get_announcement_time():
     return {"date_of_announcement": date_of_announcement}
 
+@app.get(
+    "/api/get-historic-announcement-time",
+    description="Gets the time for the media release for the past {} days (starting yesterday). Will return an array of ISO8602 time, or null if the scraper failed.".format(HISTORY_LENGTH),
+)
+async def get_historic_announcement_time():
+    return {"dates_of_announcement": date_of_announcement_history}
 
 @app.get(
-    "/api/get_youtube_live",
+    "/api/get-youtube-live",
     description="Checks if the min health nz youtube channel is streaming, if it is, it return the video ID, if not, it returns null.",
 )
 async def get_youtube_live():
     return {"youtube_video_id": youtube_live_id}
 
 @app.get(
-    "/api/fake_get_youtube_live",
+    "/api/fake-get-youtube-live",
     description="Fakes the /api/get_youtube_live with a hard coded 24/7 stream video id for testing",
 )
 async def fake_get_youtube_live():
@@ -51,11 +62,11 @@ async def fake_get_youtube_live():
 
 # Background Tasks
 
-def scraper_task():
+def today_announcement_task():
     global date_of_announcement
     while True:
         print("Starting website scrape")
-        date_of_announcement = scrape_website(datetime.now())
+        date_of_announcement = run_announcement_scraper([datetime.now()])[0]
         
         if date_of_announcement is None:
             # Wait ~ 15 minutes but a bit random just to stop
@@ -70,6 +81,19 @@ def scraper_task():
             print((tomorrow_time_delta))
             sleep(tomorrow_time_delta.total_seconds())
 
+def historic_announcement_task():
+    global date_of_announcement_history
+    while True:
+        print("Starting website scrape")
+        today = date.today()
+        dates_to_check = []
+        for i in range(1,HISTORY_LENGTH+1):
+            dates_to_check.append(today - timedelta(days=i))
+            print("going to check",dates_to_check)
+        date_of_announcement_history = run_announcement_scraper(dates_to_check)
+        
+        # doesn't need to update nearly as often, so we just update on average every 69 (noice) minutes
+        sleep((69+randrange(-5,5))*60)
 
 
 """
@@ -105,8 +129,12 @@ def youtube_live_task():
             # Currently streaming, so we can chill a bit to every 5 minutes
             sleep(5*60)
 
-scraper_daemon = threading.Thread(target=scraper_task, daemon=True)
-scraper_daemon.start()
+today_announcement_daemon = threading.Thread(target=today_announcement_task, daemon=True)
+today_announcement_daemon.start()
+
+historic_announcement_daemon = threading.Thread(target=historic_announcement_task, daemon=True)
+historic_announcement_daemon.start()
+
 
 youtube_live_daemon = threading.Thread(target=youtube_live_task, daemon=True)
 youtube_live_daemon.start()

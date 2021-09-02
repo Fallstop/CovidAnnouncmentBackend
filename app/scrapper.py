@@ -1,13 +1,16 @@
 from datetime import datetime,date
+from random import randint, randrange
+from time import sleep
 import requests
 from bs4 import BeautifulSoup
 import re
-from typing import Optional
+from typing import List, Optional
 
 
 BASE_URL = "https://covid19.govt.nz"
 NEWS_LIST = "/alert-levels-and-updates/latest-updates/"
 ARTICLE_URL_PREFIX = "/alert-levels-and-updates/latest-updates/"
+NEWS_LIST_FULL_URL = BASE_URL+NEWS_LIST+"?start="
 
 
 def generate_keys(date) -> "tuple[str, str]":
@@ -15,11 +18,28 @@ def generate_keys(date) -> "tuple[str, str]":
     day_key = str(date.day)
     return month_key,day_key
 
-def scrape_website(date) -> Optional[datetime]:
+# Entry Point
+def run_announcement_scraper(dates: List[datetime]) -> List[Optional[datetime]]:
+    times: List[Optional[datetime]] = []
+    
+    # Controls the page of the news list to srape
+    current_pos_in_news = 0
+    for date in dates:
+        time = gather_articles(date,NEWS_LIST_FULL_URL+str(current_pos_in_news*10))
+        if time is None:
+            # Try moving to next page
+            time = gather_articles(date,NEWS_LIST_FULL_URL+str((current_pos_in_news+1)*10))
+            if time is not None:
+                # Oh look it worked, lets do that for the rest
+                current_pos_in_news += 1
+        times.append(time)
+        # Random delay to not spam there servers
+        sleep(randrange(0,3))
+    return times
+
+def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
     month_key,day_key = generate_keys(date)
-
-
-    page = requests.get(BASE_URL + NEWS_LIST)
+    page = requests.get(news_list_url)
     
     soup = BeautifulSoup(page.content, "html.parser")
     all_page_links = soup.find_all('a')
@@ -30,7 +50,7 @@ def scrape_website(date) -> Optional[datetime]:
         # Filter for article links
         if link.startswith(ARTICLE_URL_PREFIX):
             # Filter for correct article
-            if (month_key in link and day_key in link):
+            if (month_key in link and day_key in link and ("media" in link or "update" in link)):
                 print("Found latest article: ",link)
                 return scanArticle(link, date)
 
