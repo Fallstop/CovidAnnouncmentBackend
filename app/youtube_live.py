@@ -7,7 +7,7 @@
 import os
 import sys
 from dotenv import load_dotenv
-from typing import Optional
+from typing import List, Optional
 
 
 load_dotenv()  # take environment variables from .env.
@@ -55,6 +55,19 @@ def checkLive() -> Optional[str]:
         print("Channel not live")
         return None
 
+def getHistoricVideos(num_to_get) -> List[Optional[str]]:
+    request = youtube.search().list(
+        part="snippet",
+        channelId="UCPuGpQo9IX49SGn2iYCoqOQ",
+        eventType="completed",
+        maxResults=num_to_get,
+        order="date",
+        type="video"
+    )
+    response = request.execute()
+    past_videos: List[Optional[str]] = list(map(lambda video: video["id"]["videoId"], response["items"]))
+    return past_videos
+
 if __name__ == "__main__":
     print("Check Live")
-    print(checkLive())
+    print(getHistoricVideos(5))
