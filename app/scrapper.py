@@ -50,7 +50,7 @@ def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
         # Filter for article links
         if link.startswith(ARTICLE_URL_PREFIX):
             # Filter for correct article
-            if (month_key in link and day_key in link and ("media" in link or "update" in link)):
+            if (month_key in link and day_key in link):
                 print("Found latest article: ",link)
                 return scanArticle(link, date)
 
