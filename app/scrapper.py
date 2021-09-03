@@ -22,7 +22,7 @@ def generate_keys(date) -> "tuple[str, str]":
 def run_announcement_scraper(dates: List[datetime]) -> List[Optional[datetime]]:
     times: List[Optional[datetime]] = []
     
-    # Controls the page of the news list to srape
+    # Controls the page of the news list to scrape
     current_pos_in_news = 0
     for date in dates:
         time = gather_articles(date,NEWS_LIST_FULL_URL+str(current_pos_in_news*10))
@@ -32,6 +32,8 @@ def run_announcement_scraper(dates: List[datetime]) -> List[Optional[datetime]]:
             if time is not None:
                 # Oh look it worked, lets do that for the rest
                 current_pos_in_news += 1
+        if time is not None:
+            print("COULD NOT FIND ARTICLE")
         times.append(time)
         # Random delay to not spam there servers
         sleep(randrange(0,3))
@@ -46,13 +48,17 @@ def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
     print("Using month key: ",month_key,"and day key:",day_key)
 
     for link_element in all_page_links:
-        link: str = link_element["href"]
+        link = link_element["href"]
         # Filter for article links
         if link.startswith(ARTICLE_URL_PREFIX):
+            # Get Date Footer
+            footer_of_article = link_element.parent.parent.parent.find("footer")
             # Filter for correct article
-            if (month_key in link and day_key in link):
-                print("Found latest article: ",link)
-                return scanArticle(link, date)
+            if (footer_of_article is not None):
+                date_of_article = str(footer_of_article.find("p")).lower()
+                if (month_key in date_of_article and day_key in date_of_article):
+                    print("Found latest article: ",link)
+                    return scanArticle(link, date)
 
 def scanArticle(link_suffix: str, date: datetime) -> Optional[datetime]:
     page = requests.get(BASE_URL + link_suffix)

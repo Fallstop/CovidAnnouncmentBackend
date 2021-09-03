@@ -103,6 +103,8 @@ def historic_data_collection_task():
     global youtube_video_history
 
     while True:
+        print("Getting historic youtube videos")
+        youtube_video_history = getHistoricVideos(HISTORY_LENGTH)
         print("Starting historic website scrape")
         today = date.today()
         dates_to_check = []
@@ -110,9 +112,6 @@ def historic_data_collection_task():
             dates_to_check.append(today - timedelta(days=i))
             print("going to check", dates_to_check)
         date_of_announcement_history = run_announcement_scraper(dates_to_check)
-
-        print("Getting historic youtube videos")
-        youtube_video_history = getHistoricVideos(HISTORY_LENGTH)
 
         # doesn't need to update nearly as often, so we just update on average every 6.9 (noice) hours
         sleep((6.9+randrange(-1, 1))*60*60)
@@ -133,12 +132,6 @@ def youtube_live_task():
         # Always check on start
         print("Checking if youtube Live")
         youtube_live_id = checkLive()
-
-        # If the date isn't posted, we can assume
-        # the video wouldn't be posted yet
-        while date_of_announcement is None:
-            # 42: The Answer to the Ultimate **Question** of Life, the Universe, and Everything.
-            sleep(42)
 
         if youtube_live_id is None and date_of_announcement is not None:
             # We use a sine graph to get the current cache time,
