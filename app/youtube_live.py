@@ -64,7 +64,6 @@ def getHistoricVideos(num_to_get) -> List[Optional[str]]:
         order="date",
         type="video"
     )
-    
     response = request.execute()
     past_videos: List[Optional[str]] = list(map(lambda video: video["id"]["videoId"], response["items"]))
     print("Past Videos:",past_videos)
