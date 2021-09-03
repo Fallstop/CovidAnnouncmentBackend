@@ -105,13 +105,13 @@ def historic_data_collection_task():
     while True:
         print("Getting historic youtube videos")
         youtube_video_history = getHistoricVideos(HISTORY_LENGTH)
-        print("Starting historic website scrape")
-        today = date.today()
-        dates_to_check = []
-        for i in range(1, HISTORY_LENGTH+1):
-            dates_to_check.append(today - timedelta(days=i))
-            print("going to check", dates_to_check)
-        date_of_announcement_history = run_announcement_scraper(dates_to_check)
+        # print("Starting historic website scrape")
+        # today = date.today()
+        # dates_to_check = []
+        # for i in range(1, HISTORY_LENGTH+1):
+        #     dates_to_check.append(today - timedelta(days=i))
+        #     print("going to check", dates_to_check)
+        # date_of_announcement_history = run_announcement_scraper(dates_to_check)
 
         # doesn't need to update nearly as often, so we just update on average every 6.9 (noice) hours
         sleep((6.9+randrange(-1, 1))*60*60)
@@ -148,9 +148,9 @@ def youtube_live_task():
             sleep(5*60)
 
 
-today_announcement_daemon = threading.Thread(
-    target=today_announcement_task, daemon=True)
-today_announcement_daemon.start()
+# today_announcement_daemon = threading.Thread(
+#     target=today_announcement_task, daemon=True)
+# today_announcement_daemon.start()
 
 historic_data_collection_daemon = threading.Thread(
     target=historic_data_collection_task, daemon=True)
