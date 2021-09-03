@@ -66,8 +66,9 @@ def getHistoricVideos(num_to_get) -> List[Optional[str]]:
     )
     response = request.execute()
     past_videos: List[Optional[str]] = list(map(lambda video: video["id"]["videoId"], response["items"]))
+    print("Past Videos:",past_videos)
     return past_videos
 
 if __name__ == "__main__":
     print("Check Live")
-    print(getHistoricVideos(5))
+    print(checkLive())

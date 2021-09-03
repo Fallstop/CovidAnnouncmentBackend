@@ -47,6 +47,8 @@ def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
     all_page_links = soup.find_all('a')
     print("Using month key: ",month_key,"and day key:",day_key)
 
+    final_result = None
+
     for link_element in all_page_links:
         link = link_element["href"]
         # Filter for article links
@@ -58,7 +60,10 @@ def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
                 date_of_article = str(footer_of_article.find("p")).lower()
                 if (month_key in date_of_article and day_key in date_of_article):
                     print("Found latest article: ",link)
-                    return scanArticle(link, date)
+                    result = scanArticle(link, date)
+                    if result is not None:
+                        final_result = result
+    return final_result
 
 def scanArticle(link_suffix: str, date: datetime) -> Optional[datetime]:
     page = requests.get(BASE_URL + link_suffix)
