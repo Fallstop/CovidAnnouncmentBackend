@@ -5,3 +5,4 @@ python-dotenv
 google-api-python-client
 google-cloud-logging
 pause
+retrying
