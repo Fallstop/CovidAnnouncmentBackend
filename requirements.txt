@@ -3,3 +3,4 @@ beautifulsoup4
 requests
 python-dotenv
 google-api-python-client
+google-cloud-logging

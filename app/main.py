@@ -104,7 +104,9 @@ def historic_data_collection_task():
 
     while True:
         print("Getting historic youtube videos")
-        youtube_video_history = getHistoricVideos(HISTORY_LENGTH)
+        response = getHistoricVideos(HISTORY_LENGTH)
+        if response is not None:
+            youtube_video_history = response
         print("Starting historic website scrape")
         today = date.today()
         dates_to_check = []
@@ -113,8 +115,8 @@ def historic_data_collection_task():
             print("going to check", dates_to_check)
         date_of_announcement_history = run_announcement_scraper(dates_to_check)
 
-        # doesn't need to update nearly as often, so we just update on average every 6.9 (noice) hours
-        sleep((6.9+randrange(-1, 1))*60*60)
+        # doesn't need to update nearly as often, so we just update every 6.9 (noice) hours
+        sleep(6.9*60*60)
 
 
 """`
@@ -132,20 +134,33 @@ def youtube_live_task():
         # Always check on start
         print("Checking if youtube Live")
         youtube_live_id = checkLive()
+        dt = datetime.now()
 
-        if youtube_live_id is None and date_of_announcement is not None:
+        focal_point = datetime.now().replace(hour=13)
+        if date_of_announcement is not None:
+            focal_point = date_of_announcement
+        elif dt.hour < 12:
+            resume_time = datetime.now().replace(hour=12)
+            sleep((datetime.now()-resume_time).total_seconds())
+            continue
+        elif dt.hour > 20:
+            tomorrow = dt + timedelta(days=1, hours=12)
+            tomorrow_time_delta = (datetime.combine(tomorrow, time.min) - dt)
+            sleep(tomorrow_time_delta.total_seconds())
+
+        if youtube_live_id is None:
             # We use a sine graph to get the current cache time,
             # It will cache for an hour at the opposite time of day,
             # and up to 30s at the announced time
             # https://www.desmos.com/calculator/wjsljmnmyx
             time_diff_announcement = abs(
-                date_of_announcement - datetime.now()).total_seconds()/60/60
+                focal_point - datetime.now()).total_seconds()/60/60
             cache_time = sin(time_diff_announcement/7.65)*59.5+0.5
             print("sleeping for", cache_time)
             sleep(cache_time*60)
         else:
             # Currently streaming, so we can chill a bit to every 5 minutes
-            sleep(5*60)
+            sleep(15*60)
 
 
 today_announcement_daemon = threading.Thread(
