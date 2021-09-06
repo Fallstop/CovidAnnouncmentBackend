@@ -55,7 +55,7 @@ youtube_active = deque([youtube_1,youtube_2])
 channel_id = "UCPuGpQo9IX49SGn2iYCoqOQ"
 
 def checkLive() -> Optional[str]:
-    response = youtubeSearchWrapper(1)
+    response = youtubeSearchWrapper(1,live=True)
 
     if response is not None and len(response["items"]) > 0:
         print("Channel is Live!")
@@ -75,11 +75,11 @@ def getHistoricVideos(max_results) -> Optional[List[Optional[str]]]:
     print("Past Videos:",past_videos)
     return past_videos
 
-def youtubeSearchWrapper(max_results, swap = False):
+def youtubeSearchWrapper(max_results, live = False,swap = False):
     request = youtube_active[0].search().list(
         part="snippet",
         channelId=channel_id,
-        eventType="completed",
+        eventType="live" if live else "completed",
         maxResults=max_results,
         order="date",
         type="video"
