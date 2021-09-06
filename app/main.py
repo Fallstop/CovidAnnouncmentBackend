@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from datetime import datetime, timedelta, time, date
-from time import sleep
+import pause
 from random import randrange
 from typing import List, Optional
 import threading
@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from math import sin
 
 from scrapper import run_announcement_scraper
-from youtube_live import checkLive,getHistoricVideos
+from youtube_live_api import getHistoricVideos
+from youtube_live_scrape import checkLive
 
 app = FastAPI()
 
@@ -97,15 +98,13 @@ def today_announcement_task():
         if date_of_announcement is None:
             # Wait ~ 15 minutes but a bit random just to stop
             # the bad kind of bot prevention scripts.
-            sleep((15+randrange(-5, 5))*60)
+            pause.minutes((15+randrange(-1, 1)))
         else:
-            print("Waiting For tomorrow to scrape website")
             # We have the date for today, so just wait for tomorrow
             dt = datetime.now()
-            tomorrow = dt + timedelta(days=1)
-            tomorrow_time_delta = (datetime.combine(tomorrow, time.min) - dt)
-            print((tomorrow_time_delta))
-            sleep(tomorrow_time_delta.total_seconds())
+            tomorrow = datetime.combine(dt + timedelta(days=1),time.min)
+            print("Waiting For tomorrow to scrape website",tomorrow)
+            pause.until(tomorrow)
 
 
 def historic_data_collection_task():
@@ -117,16 +116,16 @@ def historic_data_collection_task():
         response = getHistoricVideos(HISTORY_LENGTH)
         if response is not None:
             youtube_video_history = response
+        
         print("Starting historic website scrape")
         today = date.today()
         dates_to_check = []
         for i in range(1, HISTORY_LENGTH+1):
             dates_to_check.append(today - timedelta(days=i))
-            print("going to check", dates_to_check)
         date_of_announcement_history = run_announcement_scraper(dates_to_check)
 
         # doesn't need to update nearly as often, so we just update every 6.9 (noice) hours
-        sleep(6.9*60*60)
+        pause.hours(6.9)
 
 
 """`
@@ -147,28 +146,23 @@ def youtube_live_task():
         dt = datetime.now()
 
         focal_point = get_announcement_time()
-        if dt.hour < 12:
-            resume_time = datetime.now().replace(hour=12)
-            sleep((datetime.now()-resume_time).total_seconds())
-            continue
-        elif dt.hour > 20:
-            tomorrow = dt + timedelta(days=1, hours=12)
-            tomorrow_time_delta = (datetime.combine(tomorrow, time.min) - dt)
-            sleep(tomorrow_time_delta.total_seconds())
-
+        
+        time(hour=12)
         if youtube_live_id is None:
-            # We use a sine graph to get the current cache time,
-            # It will cache for an hour at the opposite time of day,
-            # and up to 30s at the announced time
-            # https://www.desmos.com/calculator/wjsljmnmyx
-            time_diff_announcement = abs(
-                focal_point - datetime.now()).total_seconds()/60/60
-            cache_time = sin(time_diff_announcement/7.65)*59.5+0.5
-            print("sleeping for", cache_time)
-            sleep(cache_time*60)
+            if dt.hour < 12:
+                resume_time = datetime.combine(dt,time(hour=12))
+                pause.until(resume_time)
+            elif dt.hour > 20:
+                tomorrow = datetime.combine(dt + timedelta(days=1),time(hour=12))
+                pause.until(tomorrow)
+                continue
+            elif date_of_announcement is not None and dt < date_of_announcement:
+                pause.seconds(30)
+            else:
+                pause.minutes(2)
         else:
             # Currently streaming, so we can chill a bit to every 5 minutes
-            sleep(15*60)
+            pause.minutes(5)
 
 
 today_announcement_daemon = threading.Thread(

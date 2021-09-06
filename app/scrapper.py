@@ -1,4 +1,4 @@
-from datetime import datetime,date
+from datetime import datetime,date,time
 from random import randint, randrange
 from time import sleep
 import requests
@@ -32,20 +32,16 @@ def run_announcement_scraper(dates: List[datetime]) -> List[Optional[datetime]]:
             if time is not None:
                 # Oh look it worked, lets do that for the rest
                 current_pos_in_news += 1
-        if time is not None:
-            print("COULD NOT FIND ARTICLE")
         times.append(time)
-        # Random delay to not spam there servers
-        sleep(randrange(0,3))
+    print("Announcement Times",times)
     return times
 
-def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
-    month_key,day_key = generate_keys(date)
+def gather_articles(target_date: datetime, news_list_url: str)->Optional[datetime]:
+    month_key,day_key = generate_keys(target_date)
     page = requests.get(news_list_url)
     
     soup = BeautifulSoup(page.content, "html.parser")
     all_page_links = soup.find_all('a')
-    print("Using month key: ",month_key,"and day key:",day_key)
 
     final_result = None
 
@@ -58,14 +54,16 @@ def gather_articles(date: datetime, news_list_url: str)->Optional[datetime]:
             # Filter for correct article
             if (footer_of_article is not None):
                 date_of_article = str(footer_of_article.find("p")).lower()
-                if (month_key in date_of_article and day_key in date_of_article):
-                    print("Found latest article: ",link)
-                    result = scanArticle(link, date)
+                if (date.isoformat(target_date) in date_of_article):
+                    result = scanArticle(link, target_date)
                     if result is not None:
+                        print("Found link",link,"for date",target_date,"with lower text",date_of_article)
+
                         final_result = result
+                        break
     return final_result
 
-def scanArticle(link_suffix: str, date: datetime) -> Optional[datetime]:
+def scanArticle(link_suffix: str, target_date: datetime) -> Optional[datetime]:
     page = requests.get(BASE_URL + link_suffix)
     
     soup = BeautifulSoup(page.content, "html.parser")
@@ -80,9 +78,7 @@ def scanArticle(link_suffix: str, date: datetime) -> Optional[datetime]:
     for text in filtered_locations_to_search:
         result = re.search(r"([1-2]?[0-9])\s?([ap]m)",str(text),flags=re.IGNORECASE)
         if result is not None:
-            print(result.groups())
             hour = int(result.groups()[0])
             if result.groups()[1].lower()=="pm":
                 hour += 12
-            return datetime(date.year,date.month,date.day,hour=hour)
-    print("Could not find date, returning None")
+            return datetime.combine(target_date,time(hour=hour))
