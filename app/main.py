@@ -22,6 +22,9 @@ youtube_video_history: List[Optional[str]] = [None]*HISTORY_LENGTH
 
 youtube_live_id: Optional[str] = None
 
+date_of_announcement_overide_time = datetime.combine(
+    date.today(), 
+    time(16, 0))
 
 ALLOWED_ORIGENS = ["*"]
 
@@ -36,10 +39,10 @@ app.add_middleware(
 
 @app.get(
     "/api/get-announcement-time",
-    description="Gets the time for the media release for today. Will return an ISO8602 time, or null if it hasn't been posted yet.",
+    description="Gets the time for the media release for today. Will return an ISO8602 time, or the overide time if it hasn't been posted yet.",
 )
-async def get_announcement_time():
-    return {"date_of_announcement": date_of_announcement}
+async def api_get_announcement_time():
+    return {"date_of_announcement": get_announcement_time()}
 
 
 @app.get(
@@ -47,7 +50,7 @@ async def get_announcement_time():
     description="Gets the time for the media release for the past {} days (starting yesterday). Will return an array of ISO8602 time, or null if the scraper failed.".format(
         HISTORY_LENGTH),
 )
-async def get_historic_announcement_time():
+async def api_get_historic_announcement_time():
     return {"dates_of_announcement": date_of_announcement_history}
 
 
@@ -56,7 +59,7 @@ async def get_historic_announcement_time():
     description="Gets the video ID's for the media releases for the past {} days (starting yesterday). Will return an array of ISO8602 time, or null if failure, or not loaded yet.".format(
         HISTORY_LENGTH),
 )
-async def get_historic_youtube_live():
+async def api_get_historic_youtube_live():
     return {"youtube_video_ids": youtube_video_history}
 
 
@@ -64,7 +67,7 @@ async def get_historic_youtube_live():
     "/api/get-youtube-live",
     description="Checks if the min health nz youtube channel is streaming, if it is, it return the video ID, if not, it returns null.",
 )
-async def get_youtube_live():
+async def api_get_youtube_live():
     return {"youtube_video_id": youtube_live_id}
 
 
@@ -72,11 +75,18 @@ async def get_youtube_live():
     "/api/fake-get-youtube-live",
     description="Fakes the /api/get_youtube_live with a hard coded 24/7 stream video id for testing",
 )
-async def fake_get_youtube_live():
+async def api_fake_get_youtube_live():
     return {"youtube_video_id": "5qap5aO4i9A"}
 
-# Background Tasks
+# Get Announcement Time
+def get_announcement_time():
+    if date_of_announcement is None:
+        return date_of_announcement_overide_time
+    else:
+        return date_of_announcement
 
+
+# Background Tasks
 
 def today_announcement_task():
     global date_of_announcement
@@ -136,10 +146,8 @@ def youtube_live_task():
         youtube_live_id = checkLive()
         dt = datetime.now()
 
-        focal_point = datetime.now().replace(hour=13)
-        if date_of_announcement is not None:
-            focal_point = date_of_announcement
-        elif dt.hour < 12:
+        focal_point = get_announcement_time()
+        if dt.hour < 12:
             resume_time = datetime.now().replace(hour=12)
             sleep((datetime.now()-resume_time).total_seconds())
             continue
