@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from math import sin
 
 from scrapper import run_announcement_scraper
-from youtube_live import checkLive,getHistoricVideos
+from youtube_live_api import getHistoricVideos
+from youtube_live_scrape import checkLive
 
 app = FastAPI()
 
