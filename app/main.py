@@ -25,7 +25,7 @@ youtube_live_id: Optional[str] = None
 
 date_of_announcement_overide_time = datetime.combine(
     date.today(), 
-    time(16, 0))
+    time(13, 0))
 
 ALLOWED_ORIGENS = ["*"]
 
@@ -124,8 +124,8 @@ def historic_data_collection_task():
             dates_to_check.append(today - timedelta(days=i))
         date_of_announcement_history = run_announcement_scraper(dates_to_check)
 
-        # doesn't need to update nearly as often, so we just update every 6.9 (noice) hours
-        pause.hours(6.9)
+        # doesn't need to update nearly as often, so we just update every 4.20 hours
+        pause.hours(4.20)
 
 
 """`
@@ -145,21 +145,16 @@ def youtube_live_task():
         youtube_live_id = checkLive()
         dt = datetime.now()
 
-        focal_point = get_announcement_time()
+        # focal_point = get_announcement_time()
         
         time(hour=12)
         if youtube_live_id is None:
-            if dt.hour < 12:
-                resume_time = datetime.combine(dt,time(hour=12))
-                pause.until(resume_time)
-            elif dt.hour > 20:
-                tomorrow = datetime.combine(dt + timedelta(days=1),time(hour=12))
-                pause.until(tomorrow)
-                continue
-            elif date_of_announcement is not None and dt < date_of_announcement:
+            if date_of_announcement is not None and dt < get_announcement_time():
                 pause.seconds(30)
-            else:
+            elif dt < get_announcement_time():
                 pause.minutes(2)
+            else:
+                pause.minutes(5)
         else:
             # Currently streaming, so we can chill a bit to every 5 minutes
             pause.minutes(5)
