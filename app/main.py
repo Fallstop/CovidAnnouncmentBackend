@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from datetime import datetime, timedelta, time, date
 import pause
 from random import randrange
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import threading
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ date_of_announcement: Optional[datetime] = None
 
 HISTORY_LENGTH = 5
 date_of_announcement_history: List[Optional[datetime]] = [None]*HISTORY_LENGTH
-youtube_video_history: List[Optional[str]] = [None]*HISTORY_LENGTH
+youtube_video_history: List[Optional[Tuple[date,str]]] = [None]*HISTORY_LENGTH
 
 
 youtube_live_id: Optional[str] = None

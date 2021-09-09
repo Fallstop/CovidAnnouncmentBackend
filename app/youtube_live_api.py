@@ -4,10 +4,11 @@
 # See instructions for running these code samples locally:
 # https://developers.google.com/explorer-help/guides/code_samples#python
 
+from datetime import date
 import os
 import sys
 from dotenv import load_dotenv
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from collections import deque
 
 from uritemplate.api import expand
@@ -67,11 +68,11 @@ def checkLive() -> Optional[str]:
         print("Channel not live")
         return None
 
-def getHistoricVideos(max_results) -> Optional[List[Optional[str]]]:
+def getHistoricVideos(max_results) -> Optional[List[Optional[Tuple[date,str]]]]:
     response = youtubeSearchWrapper(max_results)
     if (response is None):
         return None
-    past_videos: List[Optional[str]] = list(map(lambda video: video["id"]["videoId"], response["items"]))
+    past_videos: List[Optional[Tuple[date,str]]] = list(map(lambda video: (video["snippet"]["publishedAt"],video["id"]["videoId"]), response["items"]))
     print("Past Videos:",past_videos)
     return past_videos
 
