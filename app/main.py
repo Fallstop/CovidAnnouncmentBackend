@@ -92,19 +92,20 @@ def get_announcement_time():
 def today_announcement_task():
     global date_of_announcement
     while True:
-        print("Starting website scrape")
-        date_of_announcement = run_announcement_scraper([datetime.now()])[0]
-
-        if date_of_announcement is None:
-            # Wait ~ 15 minutes but a bit random just to stop
-            # the bad kind of bot prevention scripts.
-            pause.minutes((15+randrange(-1, 1)))
-        else:
-            # We have the date for today, so just wait for tomorrow
-            dt = datetime.now()
-            tomorrow = datetime.combine(dt + timedelta(days=1),time.min)
-            print("Waiting For tomorrow to scrape website",tomorrow)
-            pause.until(tomorrow)
+        try:
+            print("Starting website scrape")
+            date_of_announcement = run_announcement_scraper([datetime.now()])[0]
+        finally:
+            if date_of_announcement is None:
+                # Wait ~ 15 minutes but a bit random just to stop
+                # the bad kind of bot prevention scripts.
+                pause.minutes((15+randrange(-1, 1)))
+            else:
+                # We have the date for today, so just wait for tomorrow
+                dt = datetime.now()
+                tomorrow = datetime.combine(dt + timedelta(days=1),time.min)
+                print("Waiting For tomorrow to scrape website",tomorrow)
+                pause.until(tomorrow)
 
 
 def historic_data_collection_task():
@@ -112,20 +113,21 @@ def historic_data_collection_task():
     global youtube_video_history
 
     while True:
-        print("Getting historic youtube videos")
-        response = getHistoricVideos(HISTORY_LENGTH)
-        if response is not None:
-            youtube_video_history = response
-        
-        print("Starting historic website scrape")
-        today = date.today()
-        dates_to_check = []
-        for i in range(1, HISTORY_LENGTH+1):
-            dates_to_check.append(today - timedelta(days=i))
-        date_of_announcement_history = run_announcement_scraper(dates_to_check)
-
-        # doesn't need to update nearly as often, so we just update every 4.20 hours
-        pause.hours(4.20)
+        try:
+            print("Getting historic youtube videos")
+            response = getHistoricVideos(HISTORY_LENGTH)
+            if response is not None:
+                youtube_video_history = response
+            
+            print("Starting historic website scrape")
+            today = date.today()
+            dates_to_check = []
+            for i in range(1, HISTORY_LENGTH+1):
+                dates_to_check.append(today - timedelta(days=i))
+            date_of_announcement_history = run_announcement_scraper(dates_to_check)
+        finally:
+            # doesn't need to update nearly as often, so we just update every 4.20 hours
+            pause.hours(4.20)
 
 
 """`
@@ -140,24 +142,25 @@ So we just don't update it when we don't think it will return anything interesti
 def youtube_live_task():
     global youtube_live_id
     while True:
-        # Always check on start
-        print("Checking if youtube Live")
-        youtube_live_id = checkLive()
-        dt = datetime.now()
-
-        # focal_point = get_announcement_time()
-        
-        time(hour=12)
-        if youtube_live_id is None:
-            if date_of_announcement is not None and dt < get_announcement_time():
-                pause.seconds(30)
-            elif dt < get_announcement_time():
-                pause.minutes(2)
+        try:
+            # Always check on start
+            print("Checking if youtube Live")
+            youtube_live_id = checkLive()
+            dt = datetime.now()
+        finally:
+            # focal_point = get_announcement_time()
+            
+            time(hour=12)
+            if youtube_live_id is None:
+                if date_of_announcement is not None and dt < get_announcement_time():
+                    pause.seconds(30)
+                elif dt < get_announcement_time():
+                    pause.minutes(1)
+                else:
+                    pause.minutes(2)
             else:
-                pause.minutes(5)
-        else:
-            # Currently streaming, so we can chill a bit to every 5 minutes
-            pause.minutes(5)
+                # Currently streaming, so we can chill a bit to every 5 minutes
+                pause.minutes(2)
 
 
 today_announcement_daemon = threading.Thread(
