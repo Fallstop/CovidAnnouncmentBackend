@@ -23,9 +23,7 @@ youtube_video_history: List[Optional[Tuple[date,str]]] = [None]*HISTORY_LENGTH
 
 youtube_live_id: Optional[str] = None
 
-date_of_announcement_overide_time = datetime.combine(
-    date.today(), 
-    time(13, 0))
+date_of_announcement_overide_time = time(13, 0)
 
 ALLOWED_ORIGENS = ["*"]
 
@@ -82,7 +80,10 @@ async def api_fake_get_youtube_live():
 # Get Announcement Time
 def get_announcement_time():
     if date_of_announcement is None:
-        return date_of_announcement_overide_time
+        return datetime.combine(
+            date.today(), 
+            date_of_announcement_overide_time
+        )
     else:
         return date_of_announcement
 
